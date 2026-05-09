@@ -1296,9 +1296,7 @@ function _renderGameGrid(list){
   }
   grid.innerHTML=list.map((g,i)=>{
     const col=_gameColor(g.name),emoji=_gameEmoji(g.name);
-    const thumb=`${BASE}${g.url}/thumbnail.jpg`;
     return `<div class="game-card" onclick="window._launchGame(${i})" style="background:${col}">
-      <img class="game-card-thumb" src="${thumb}" onerror="this.style.display='none'" loading="lazy"/>
       <div class="game-card-emoji">${emoji}</div>
       <div class="game-card-overlay"><div class="game-card-name">${g.name}</div></div>
       <div class="game-play-overlay"><button class="game-play-btn">&#9654; Play</button></div>
