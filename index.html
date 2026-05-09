@@ -1296,7 +1296,7 @@ function _renderGameGrid(list){
   }
   grid.innerHTML=list.map((g,i)=>{
     const col=_gameColor(g.name),emoji=_gameEmoji(g.name);
-    const thumb=`https://image.thum.io/get/width/400/crop/300/${BASE}${g.url}`;
+    const thumb=`https://alberto40390434.github.io/Chat-Games/games/${g.url}/thumbnail.jpg`;
     return `<div class="game-card" onclick="window._launchGame(${i})" style="background:${col}">
       <img class="game-card-thumb" src="${thumb}" onerror="this.style.display='none'" loading="lazy"/>
       <div class="game-card-overlay"><div class="game-card-name">${g.name}</div></div>
