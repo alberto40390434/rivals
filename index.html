@@ -347,22 +347,28 @@ body{font-family:var(--font);background:var(--bg);color:var(--text);height:100vh
       </div>
     </div>
 
-    <!-- Games area -->
-    <div id="gamesArea" style="display:none;flex-direction:column;position:fixed;top:0;left:0;width:100vw;height:100vh;background:var(--bg);z-index:500">
-      <div style="display:flex;align-items:center;gap:10px;padding:10px 14px;border-bottom:1px solid var(--border);flex-shrink:0;background:var(--bg)">
-        <span style="font-size:16px">🎮</span>
-        <span style="font-weight:600;font-size:15px">G@m3S</span>
-        <input class="games-search" id="gamesSearch" placeholder="Search games..." oninput="window._filterGames(this.value)" style="margin-left:8px"/>
-        <button onclick="window._closeGames()" style="margin-left:auto;background:none;border:1px solid var(--border);cursor:pointer;color:var(--text2);font-size:12px;padding:4px 10px;border-radius:6px;font-family:var(--font)">✕ Exit</button>
-      </div>
-      <div style="display:flex;flex:1;overflow:hidden">
-        <div class="games-list" id="gamesList"></div>
-        <div class="game-frame-area" id="gameFrameArea">
-          <div class="game-placeholder"><div>🎮</div>Pick a game from the list!</div>
-        </div>
-      </div>
-    </div>
+   </div>
+
+<!-- Games overlay — fixed fullscreen -->
+<div id="gamesArea" style="display:none;flex-direction:column;position:fixed;top:0;left:0;width:100vw;height:100vh;background:#0f0f13;z-index:500">
+  <div style="display:flex;align-items:center;gap:14px;padding:12px 20px;flex-shrink:0;background:#0f0f13;border-bottom:1px solid rgba(255,255,255,.08)">
+    <span style="font-size:22px">🎮</span>
+    <span style="font-weight:700;font-size:18px;color:#fff">G@m3S</span>
+    <span id="gamesCount" style="font-size:12px;color:rgba(255,255,255,.4)"></span>
+    <input id="gamesSearch" placeholder="Search games..." oninput="window._filterGames(this.value)" style="padding:7px 14px;border-radius:20px;border:1px solid rgba(255,255,255,.15);background:rgba(255,255,255,.08);color:#fff;font-family:var(--font);font-size:13px;outline:none;width:220px;margin-left:8px"/>
+    <button onclick="window._closeGames()" style="margin-left:auto;background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.12);cursor:pointer;color:rgba(255,255,255,.7);font-size:12px;padding:6px 14px;border-radius:8px;font-family:var(--font)">✕ Exit</button>
   </div>
+  <div id="gameGrid" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:14px;padding:20px;overflow-y:auto;flex:1;align-content:start"></div>
+</div>
+<!-- Game frame fullscreen -->
+<div id="gameFrame" style="position:fixed;inset:0;background:#000;z-index:600;display:none;flex-direction:column">
+  <div style="display:flex;align-items:center;gap:10px;padding:8px 14px;background:#111;flex-shrink:0;border-bottom:1px solid #222">
+    <span style="font-size:16px">🎮</span>
+    <span id="gameFrameTitle" style="font-size:13px;font-weight:600;color:#fff;flex:1">Game</span>
+    <button onclick="window._closeGameFrame()" style="padding:5px 14px;border-radius:7px;border:none;background:#ef4444;color:#fff;cursor:pointer;font-family:var(--font);font-size:12px;font-weight:600">✕ Exit Game</button>
+  </div>
+  <iframe id="gameIframe" style="flex:1;border:none;width:100%;background:#111" allow="fullscreen;autoplay" sandbox="allow-scripts allow-same-origin allow-forms allow-popups allow-pointer-lock" allowfullscreen></iframe>
+</div>
 
   <div class="members-panel" id="membersPanel"></div>
 </div>
@@ -424,23 +430,7 @@ body{font-family:var(--font);background:var(--bg);color:var(--text);height:100vh
     <iframe id="jitsiFrame" allow="camera; microphone; fullscreen; display-capture; autoplay" allowfullscreen></iframe>
   </div>
 </div>
-<!-- Games Modal -->
-<div class="modal-overlay" id="gamesModal">
-  <div class="games-modal">
-    <div class="games-modal-header">
-      <span>🎮</span>
-      <h3>G@m3S</h3>
-      <input class="games-search" id="gamesSearch" placeholder="Search games..." oninput="window._filterGames(this.value)"/>
-      <button class="games-close-btn" onclick="window._closeGames()">✕ Close</button>
-    </div>
-    <div class="games-body">
-      <div class="games-list" id="gamesList"></div>
-      <div class="game-frame-area" id="gameFrameArea">
-        <div class="game-placeholder"><div>🎮</div>Pick a game from the list!</div>
-      </div>
-    </div>
-  </div>
-</div>
+
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
 import { getDatabase, ref, push, onChildAdded, onValue, set, remove, get } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js";
@@ -1258,33 +1248,68 @@ const GAMES = [
   {name:'Yohoho', url:'yohoho'},
 ].sort((a,b)=>a.name.localeCompare(b.name));
 
-let _gamesFiltered = [...GAMES];
-
-window._openGames = function(){
-  _gamesFiltered = [...GAMES];
-  _renderGamesList(_gamesFiltered);
-  document.getElementById('gamesSearch').value = '';
-  document.getElementById('gameFrameArea').innerHTML = '<div class="game-placeholder"><div>🎮</div>Pick a game from the list!</div>';
-  document.getElementById('gamesArea').style.display = 'flex';
-};
-window._closeGames = function(){
-  document.getElementById('gamesArea').style.display = 'none';
-  document.getElementById('gameFrameArea').innerHTML = '<div class="game-placeholder"><div>🎮</div>Pick a game from the list!</div>';
-};
-window._filterGames = function(q){
-  _gamesFiltered = GAMES.filter(g => g.name.toLowerCase().includes(q.toLowerCase()));
-  _renderGamesList(_gamesFiltered);
-};
-function _renderGamesList(list){
-  document.getElementById('gamesList').innerHTML = list.map((g,i) =>
-    `<div class="game-item" onclick="window._loadGame(${i},this)">${g.name}</div>`
-  ).join('');
+function _gameEmoji(name){
+  const n=name.toLowerCase();
+  if(/shoot|gun|snip|war|battle|tank|fight|combat|laser/.test(n)) return '🔫';
+  if(/race|drive|drift|moto|car|kart/.test(n)) return '🏎️';
+  if(/run|jump|hop|dash|subway|temple/.test(n)) return '🏃';
+  if(/soccer|basket|volley|tennis|sport|bowl|ball/.test(n)) return '⚽';
+  if(/click|idle|miner|cookie|progress|particle|clicker/.test(n)) return '👆';
+  if(/puzzle|block|2048|tetris|tile|hextris|breaklock/.test(n)) return '🧩';
+  if(/fish|bird|frog|duck|bear|cat|dog|dino|monkey|scuba/.test(n)) return '🐾';
+  if(/space|galaxy|star|alien|rocket/.test(n)) return '🚀';
+  if(/sword|knight|rpg|quest|hero|legend|shadow|lion|soldier/.test(n)) return '⚔️';
+  if(/music|funkin|rhythm|osu|dance/.test(n)) return '🎵';
+  if(/craft|build|planet|sand/.test(n)) return '⛏️';
+  if(/slope|tunnel|vex|ovo|stickman|surf/.test(n)) return '🏄';
+  return '🎮';
 }
-window._loadGame = function(idx, el){
-  document.querySelectorAll('.game-item').forEach(e => e.classList.remove('active'));
-  el.classList.add('active');
-  document.getElementById('gameFrameArea').innerHTML =
-    `<iframe src="${BASE}${_gamesFiltered[idx].url}" allow="fullscreen" sandbox="allow-scripts allow-same-origin allow-forms allow-popups allow-pointer-lock"></iframe>`;
+const _GCOLS=['#1a1a2e','#16213e','#0f3460','#1b1b2f','#2d132c','#1a472a','#2c3e50','#1e3a5f','#3d0000','#1a1a00','#003333','#2d1b69','#1a0030','#003040','#301a00'];
+function _gameColor(name){let h=0;for(const c of name)h=(h*31+c.charCodeAt(0))&0xfffffff;return _GCOLS[h%_GCOLS.length];}
+
+let _gamesFiltered=[...GAMES];
+
+window._openGames=function(){
+  _gamesFiltered=[...GAMES];
+  document.getElementById('gamesSearch').value='';
+  document.getElementById('gamesCount').textContent=`Browse and play ${GAMES.length} games`;
+  _renderGameGrid(_gamesFiltered);
+  document.getElementById('gamesArea').style.display='flex';
+};
+window._closeGames=function(){
+  document.getElementById('gamesArea').style.display='none';
+};
+window._closeGameFrame=function(){
+  document.getElementById('gameIframe').src='';
+  document.getElementById('gameFrame').style.display='none';
+};
+window._filterGames=function(q){
+  _gamesFiltered=GAMES.filter(g=>g.name.toLowerCase().includes(q.toLowerCase()));
+  document.getElementById('gamesCount').textContent=q?`${_gamesFiltered.length} result${_gamesFiltered.length!==1?'s':''}`:`Browse and play ${GAMES.length} games`;
+  _renderGameGrid(_gamesFiltered);
+};
+function _renderGameGrid(list){
+  const grid=document.getElementById('gameGrid');
+  if(!list.length){
+    grid.innerHTML='<div style="grid-column:1/-1;text-align:center;color:rgba(255,255,255,.25);padding:70px 0;font-size:14px">No games found 🙁</div>';
+    return;
+  }
+  grid.innerHTML=list.map((g,i)=>{
+    const col=_gameColor(g.name),emoji=_gameEmoji(g.name);
+    const thumb=`${BASE}${g.url}/thumbnail.jpg`;
+    return `<div class="game-card" onclick="window._launchGame(${i})" style="background:${col}">
+      <img class="game-card-thumb" src="${thumb}" onerror="this.style.display='none'" loading="lazy"/>
+      <div class="game-card-emoji">${emoji}</div>
+      <div class="game-card-overlay"><div class="game-card-name">${g.name}</div></div>
+      <div class="game-play-overlay"><button class="game-play-btn">&#9654; Play</button></div>
+    </div>`;
+  }).join('');
+}
+window._launchGame=function(idx){
+  const g=_gamesFiltered[idx];
+  document.getElementById('gameFrameTitle').textContent=g.name;
+  document.getElementById('gameIframe').src=`${BASE}${g.url}`;
+  document.getElementById('gameFrame').style.display='flex';
 };
 renderLoginColors();
 </script>
